@@ -1,0 +1,15 @@
+- id: check-license-headers
+  name: Check license headers
+  description: Check if files match provided license template
+  entry: check-license-headers --summary
+  language: python
+  require_serial: true
+  minimum_pre_commit_version: 2.9.0
+  types: [text]
+  exclude: |
+    (?x)^(
+      third_party/.*|
+      vendor/.*|
+      README.md|
+      \..+              # top-level hidden/dot files
+    )$
