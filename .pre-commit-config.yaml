@@ -1,0 +1,127 @@
+exclude: tests/resources
+default_stages: [commit, push]
+default_language_version:
+  python: python3.6
+minimum_pre_commit_version: 2.9.2
+
+repos:
+  - repo: meta
+    hooks:
+      - id: check-hooks-apply
+        stages: [manual]
+      - id: check-useless-excludes
+        stages: [manual]
+
+  - repo: https://github.com/pre-commit/pre-commit
+    rev: v2.14.0
+    hooks:
+      - id: validate_manifest
+
+  - # TODO repo: https://github.com/johannsdg/pre-commit-license-headers
+    # TODO rev: v0.1.0
+    repo: .
+    rev: 801f2b88a61aed5cc881f94e8a25a0d79ea1c522
+    hooks:
+      - id: check-license-headers
+        args:
+          - "--owner=The Pre-Commit License Headers Authors"
+        exclude: |
+          (?x)^(
+            .flake8|
+            .pre-commit-config.yaml|
+            .pre-commit-hooks.yaml|
+            LICENSE|
+            README.md
+          )$
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.4.0
+    hooks:
+      - id: check-ast
+      - id: check-added-large-files
+      - id: check-docstring-first
+      - id: check-executables-have-shebangs
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: debug-statements
+      - id: detect-private-key
+      - id: fix-byte-order-marker
+      - id: forbid-new-submodules
+      - id: mixed-line-ending
+      - id: name-tests-test
+      - id: trailing-whitespace
+
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v2.2.1
+    hooks:
+      - id: prettier
+        args: [--prose-wrap=always, --print-width=88]
+
+  - repo: local
+    hooks:
+      - id: isort
+        description: Sort Python code imports.
+        name: isort
+        entry: poetry run isort --filter-files
+        language: system
+        types_or: [cython, pyi, python]
+        require_serial: true
+      - id: black
+        description: Format Python code.
+        name: black
+        entry: poetry run black
+        language: system
+        require_serial: true
+        types_or: [python, pyi]
+      - id: flake8
+        description: Lint Python code.
+        name: flake8
+        entry: poetry run flake8 --config=.flake8
+        language: system
+        types: [python]
+        require_serial: true
+      - id: bandit
+        description: Check for security issues in Python code.
+        name: bandit
+        entry: poetry run bandit
+        language: system
+        types: [python]
+        exclude: tests
+      - id: safety
+        description: Check Python dependencies for known vulnerabilities.
+        name: safety
+        entry: poetry run safety check
+        language: system
+        always_run: true
+        pass_filenames: false
+        verbose: true
+        stages: [push]
+      - id: pytest
+        name: pytest
+        entry:
+          poetry run pytest -q --cov=pre_commit_license_headers --tb=short
+          --show-capture=no -ra -cpyproject.toml --cov-fail-under=100 tests/
+        language: system
+        always_run: true
+        pass_filenames: false
+        verbose: true
+        stages: [push]
+      - id: commitizen
+        name: commitizen check
+        description: Check whether the commit message follows commiting rules.
+        entry: poetry run cz check --commit-msg-file
+        language: system
+        require_serial: true
+        stages: [commit-msg]
+      - id: todos
+        name: todos
+        description: Check for todo comments.
+        language: pygrep
+        entry: (TODO|FIXME|LEFT OFF HERE)
+        args: [-i] # ignore case
+        exclude: |
+          (?x)^(
+            .pre-commit-config.yaml|
+            poetry.lock
+          )$
+        stages: [push]
